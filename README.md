@@ -42,13 +42,24 @@ Uma carta entra como **alvo** da sua coleção se atender a qualquer uma destas 
 
 ## Rodar localmente
 
-Como usa ES Modules, precisa ser servido por HTTP (não abra o `index.html` via `file://`):
+O jeito mais fácil (abre o navegador sozinho, sem instalar nada além do Node):
+
+- **Windows:** dê duplo-clique em **`start.bat`**
+- **macOS / Linux:** rode **`./start.sh`** no terminal (ou `sh start.sh`)
+- **Com npm:** `npm start`
+- **Com Node direto:** `node server.js` (opcional: `node server.js 8080` para trocar a porta)
+
+Qualquer uma dessas sobe um servidor local e abre **http://localhost:8000**.
+
+Não tem Node? Dá pra usar Python — os scripts `start` já caem nele automaticamente,
+ou rode manualmente:
 
 ```bash
-# qualquer servidor estático serve, por exemplo:
-python3 -m http.server 8000
-# depois abra http://localhost:8000
+python3 -m http.server 8000   # depois abra http://localhost:8000
 ```
+
+> ⚠️ Como usa ES Modules, precisa ser servido por HTTP. **Não** funciona abrindo o
+> `index.html` com duplo-clique (`file://`).
 
 ## Hospedar de graça (GitHub Pages)
 
@@ -63,6 +74,9 @@ index.html            # shell da interface
 styles.css            # estilos (tema escuro)
 manifest.webmanifest  # PWA
 sw.js                 # service worker (offline do app)
+server.js             # servidor local sem dependências (Node)
+start.sh / start.bat  # atalhos para rodar localmente
+package.json          # npm start
 assets/icon.svg       # ícone (Poké Ball)
 js/
   config.js           # regras/ajustes padrão + heurística de raridades
