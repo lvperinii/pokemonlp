@@ -1,0 +1,13 @@
+{
+  "name": "colecao-pokemon-tracker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Tracker de coleção de cartas Pokémon (PWA) — saiba, em cada set, o que você tem e o que falta.",
+  "scripts": {
+    "start": "node server.js",
+    "serve": "node server.js"
+  },
+  "engines": {
+    "node": ">=14"
+  }
+}

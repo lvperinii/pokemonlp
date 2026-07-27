@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1c1f26">
+  <title>Coleção Pokémon — Tracker</title>
+  <link rel="icon" href="./assets/icon.svg">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./assets/icon.svg">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <img src="./assets/icon.svg" alt="" width="28" height="28">
+      <span>Coleção Pokémon</span>
+    </div>
+    <div class="actions">
+      <button id="btn-sync" class="btn primary">Sincronizar</button>
+      <button id="btn-demo" class="btn">Ver demo</button>
+      <button id="btn-settings" class="btn">Ajustes</button>
+      <button id="btn-export" class="btn ghost" title="Baixar backup">Exportar</button>
+      <button id="btn-import" class="btn ghost" title="Restaurar backup">Importar</button>
+      <input id="file-import" type="file" accept="application/json" hidden>
+    </div>
+  </header>
+
+  <section class="stats">
+    <div class="stat"><span class="num" id="stat-total">0</span><span class="lbl">Alvos</span></div>
+    <div class="stat ok"><span class="num" id="stat-owned">0</span><span class="lbl">Tenho</span></div>
+    <div class="stat miss"><span class="num" id="stat-missing">0</span><span class="lbl">Faltam</span></div>
+    <div class="stat"><span class="num" id="stat-pct">0%</span><span class="lbl">Completo</span></div>
+  </section>
+
+  <section class="filters">
+    <input id="f-q" type="search" placeholder="Buscar por nome ou número…">
+    <select id="f-set"><option value="">Todos os sets</option></select>
+    <select id="f-reason">
+      <option value="">Todas as regras</option>
+      <option value="rarity">Raridade-chase</option>
+      <option value="named">Pikachu/Starter</option>
+      <option value="megaEvo">Evolução Mega</option>
+    </select>
+    <select id="f-code">
+      <option value="">Todas raridades</option>
+      <option value="UR">UR</option>
+      <option value="IR">IR</option>
+      <option value="SIR">SIR</option>
+      <option value="HR">HR</option>
+      <option value="MHR">MHR</option>
+      <option value="MAR">MAR</option>
+    </select>
+    <div class="segmented">
+      <button class="f-status active" data-status="all">Todos</button>
+      <button class="f-status" data-status="missing">Faltam</button>
+      <button class="f-status" data-status="owned">Tenho</button>
+    </div>
+  </section>
+
+  <main id="content" class="content"></main>
+
+  <!-- Modal: Sincronizar -->
+  <div id="modal-sync" class="modal">
+    <div class="modal-box">
+      <div class="modal-head"><h2>Sincronizar com a TCGdex</h2><button class="x" data-close="#modal-sync">×</button></div>
+      <p class="muted">Os dados são buscados no seu navegador. Marque os sets que quer acompanhar
+        (os do bloco <strong>Mega Evolução</strong> já vêm marcados) e clique em Importar.</p>
+      <label class="inline"><input type="checkbox" id="only-mega" checked> Mostrar só o bloco Mega Evolução</label>
+      <div id="set-picker" class="set-picker"><p class="muted">Abra para carregar o catálogo…</p></div>
+      <label class="inline"><input type="checkbox" id="opt-import-named" checked>
+        Importar todas as cartas de Pikachu, Charmander, Squirtle e Bulbasaur</label>
+      <div class="sync-progress"><div id="sync-progress-bar" class="bar"></div></div>
+      <div class="sync-row">
+        <span id="sync-progress-text" class="muted"></span>
+        <div>
+          <button id="cancel-sync" class="btn ghost">Cancelar</button>
+          <button id="do-import" class="btn primary">Importar selecionados</button>
+        </div>
+      </div>
+      <pre id="sync-log" class="log"></pre>
+    </div>
+  </div>
+
+  <!-- Modal: Ajustes -->
+  <div id="modal-settings" class="modal">
+    <div class="modal-box">
+      <div class="modal-head"><h2>Ajustes das regras</h2><button class="x" data-close="#modal-settings">×</button></div>
+
+      <h3>Regras ativas</h3>
+      <label class="inline"><input type="checkbox" class="rule-toggle" data-rule="rarity" checked> Raridades-chase (UR, IR, SIR, HR/MHR, MAR)</label>
+      <label class="inline"><input type="checkbox" class="rule-toggle" data-rule="named" checked> Pikachu, Charmander, Squirtle e Bulbasaur</label>
+      <label class="inline"><input type="checkbox" class="rule-toggle" data-rule="megaEvo" checked> Evoluções do bloco Mega Evolução</label>
+      <label class="inline sub"><input type="checkbox" id="opt-evo-only" checked> No bloco Mega, contar só cartas de evolução (Mega/Stage)</label>
+
+      <h3>Raridades descobertas</h3>
+      <p class="muted">Marque quais raridades entram na coleção. O código (UR/IR/…) é deduzido automaticamente.</p>
+      <div id="rarity-list" class="rarity-list"><p class="muted">Sincronize um set para ver as raridades.</p></div>
+
+      <h3>Zona de perigo</h3>
+      <button id="reset-all" class="btn danger">Apagar tudo (cache + coleção)</button>
+    </div>
+  </div>
+
+  <!-- Modal: Carta -->
+  <div id="modal-card" class="modal">
+    <div class="modal-box">
+      <div class="modal-head"><h2>Carta</h2><button class="x" data-close="#modal-card">×</button></div>
+      <div id="card-modal-body"></div>
+    </div>
+  </div>
+
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>

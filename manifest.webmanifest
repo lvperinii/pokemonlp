@@ -1,0 +1,14 @@
+{
+  "name": "Coleção Pokémon — Tracker",
+  "short_name": "Coleção Pkmn",
+  "description": "Acompanhe quais cartas Pokémon você já tem e quais faltam em cada set.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#14161b",
+  "theme_color": "#1c1f26",
+  "lang": "pt-BR",
+  "icons": [
+    { "src": "./assets/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
