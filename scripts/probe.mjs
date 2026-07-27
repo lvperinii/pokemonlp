@@ -1,99 +1,83 @@
-// scripts/probe.mjs
-// Sondagem: descobre o que a TCGdex tem para o bloco Mega Evolução (em pt),
-// imprimindo tudo no log do GitHub Actions. Não escreve arquivos.
-// Serve para eu confirmar os dados reais antes de construir o gerador.
+// scripts/probe.mjs (temporário)
+// Sondagem do megadex.com.br: descobre como os dados das cartas estão
+// estruturados (JSON embutido tipo Next.js, API, imagens, raridades),
+// imprimindo no log do GitHub Actions. Não escreve arquivos.
 
-const BASE = 'https://api.tcgdex.net/v2';
-const LANG = 'pt';
+const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
 
-async function j(path, lang = LANG) {
-  const url = `${BASE}/${lang}${path}`;
-  const r = await fetch(url, { headers: { Accept: 'application/json' } });
-  if (!r.ok) throw new Error(`HTTP ${r.status} em ${url}`);
-  return r.json();
+async function get(url) {
+  const r = await fetch(url, {
+    headers: {
+      'User-Agent': UA,
+      'Accept': 'text/html,application/json,application/xhtml+xml',
+      'Accept-Language': 'pt-BR,pt;q=0.9',
+    },
+    redirect: 'follow',
+  });
+  const text = await r.text();
+  return { status: r.status, ct: r.headers.get('content-type'), text };
 }
 
-function line(s = '') { console.log(s); }
+function L(s = '') { console.log(s); }
+
+function extractNextData(html) {
+  const m = html.match(/<script[^>]*id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
+  if (m) return { kind: '__NEXT_DATA__', json: m[1] };
+  // Nuxt / outros: __NUXT__ ou application/json
+  const m2 = html.match(/<script[^>]*type="application\/json"[^>]*>([\s\S]*?)<\/script>/);
+  if (m2) return { kind: 'application/json', json: m2[1] };
+  const m3 = html.match(/window\.__NUXT__\s*=\s*([\s\S]*?)<\/script>/);
+  if (m3) return { kind: '__NUXT__', json: m3[1] };
+  return null;
+}
+
+function keysDeep(obj, depth = 0, maxDepth = 3, path = '') {
+  if (depth > maxDepth || obj == null || typeof obj !== 'object') return [];
+  const out = [];
+  for (const k of Object.keys(obj)) {
+    const p = path ? `${path}.${k}` : k;
+    const v = obj[k];
+    const t = Array.isArray(v) ? `array[${v.length}]` : typeof v;
+    out.push(`${p}: ${t}`);
+    if (v && typeof v === 'object' && !Array.isArray(v)) out.push(...keysDeep(v, depth + 1, maxDepth, p));
+    else if (Array.isArray(v) && v.length && typeof v[0] === 'object') out.push(...keysDeep(v[0], depth + 1, maxDepth, p + '[0]'));
+  }
+  return out;
+}
 
 try {
-  line('===== SÉRIES (pt) =====');
-  let series = [];
-  try { series = await j('/series', 'pt'); }
-  catch (e) { line('pt falhou (' + e.message + '), tentando en'); series = await j('/series', 'en'); }
-  for (const s of series) line(`  ${s.id}\t${s.name}`);
+  for (const url of ['https://megadex.com.br/sets/', 'https://megadex.com.br/sets/fogo-fantasmagorico']) {
+    L('\n============================================================');
+    L('URL: ' + url);
+    let res;
+    try { res = await get(url); }
+    catch (e) { L('FALHA no fetch: ' + e.message); continue; }
+    L(`status=${res.status}  content-type=${res.ct}  tamanho=${res.text.length}`);
+    if (res.status !== 200) { L('corpo (300):' + res.text.slice(0, 300)); continue; }
 
-  const megaNeedles = ['mega'];
-  const mega = series.filter((s) => megaNeedles.some((k) => (s.name || '').toLowerCase().includes(k)));
-  line('');
-  line('===== SÉRIES QUE CONTÊM "mega" =====');
-  for (const s of mega) line(`  ${s.id}\t${s.name}`);
-  if (!mega.length) line('  (nenhuma — o bloco Mega pode ter outro nome; ver lista acima)');
-
-  // Detalhe de cada série mega -> sets
-  const megaSets = [];
-  for (const s of mega) {
-    line('');
-    line(`===== SETS da série ${s.id} (${s.name}) =====`);
-    let detail;
-    try { detail = await j(`/series/${s.id}`, 'pt'); }
-    catch (e) { line('  pt falhou, tentando en'); detail = await j(`/series/${s.id}`, 'en'); }
-    for (const st of detail.sets || []) {
-      line(`  ${st.id}\t${st.name}\tcards=${st.cardCount?.total ?? st.cardCount?.official ?? '?'}`);
-      megaSets.push(st);
-    }
-  }
-
-  // Inspeciona o primeiro set mega: briefs + 1 detalhe + raridades de amostra
-  if (megaSets.length) {
-    const target = megaSets[0];
-    line('');
-    line(`===== DETALHE DO SET ${target.id} (${target.name}) =====`);
-    let setDetail;
-    try { setDetail = await j(`/sets/${target.id}`, 'pt'); }
-    catch (e) { line('  pt falhou, tentando en'); setDetail = await j(`/sets/${target.id}`, 'en'); }
-    const cards = setDetail.cards || [];
-    line(`  total de cartas no set: ${cards.length}`);
-    line('  amostra de briefs (primeiros 3):');
-    for (const c of cards.slice(0, 3)) line('    ' + JSON.stringify(c));
-
-    if (cards.length) {
-      const cid = cards[Math.min(5, cards.length - 1)].id;
-      line('');
-      line(`  DETALHE COMPLETO da carta ${cid}:`);
-      let cd;
-      try { cd = await j(`/cards/${cid}`, 'pt'); }
-      catch (e) { line('  pt falhou, tentando en'); cd = await j(`/cards/${cid}`, 'en'); }
-      line('    ' + JSON.stringify(cd));
-      line('    -> campos: rarity=' + cd.rarity + ' | stage=' + cd.stage + ' | dexId=' + JSON.stringify(cd.dexId) + ' | category=' + cd.category);
-      line('    -> image base=' + cd.image + '  (ex.: ' + (cd.image ? cd.image + '/high.webp' : 'sem imagem') + ')');
-    }
-
-    // Raridades distintas nas primeiras 25 cartas do set
-    line('');
-    line('  RARIDADES distintas (amostra das primeiras 25 cartas):');
-    const rar = new Map();
-    for (const c of cards.slice(0, 25)) {
+    const nd = extractNextData(res.text);
+    if (nd) {
+      L('JSON embutido encontrado: ' + nd.kind + ' (tamanho ' + nd.json.length + ')');
       try {
-        const cd = await j(`/cards/${c.id}`, 'pt').catch(() => j(`/cards/${c.id}`, 'en'));
-        const key = cd.rarity || '(sem)';
-        rar.set(key, (rar.get(key) || 0) + 1);
-      } catch { /* ignora */ }
+        const data = JSON.parse(nd.json);
+        L('--- chaves (até 3 níveis) ---');
+        for (const line of keysDeep(data, 0, 3).slice(0, 120)) L('  ' + line);
+        // procurar arrays de cartas
+        const s = nd.json.toLowerCase();
+        L('menciona "rarid": ' + s.includes('rarid') + ' | "carta"/"card": ' + (s.includes('"cards"') || s.includes('carta')) + ' | "image"/"img": ' + (s.includes('image') || s.includes('img')));
+      } catch (e) { L('nao consegui parsear o JSON: ' + e.message + ' | inicio: ' + nd.json.slice(0, 200)); }
+    } else {
+      L('Sem __NEXT_DATA__/JSON embutido. Procurando pistas de API no HTML...');
+      const apis = [...res.text.matchAll(/["'`](\/(api|_next\/data)[^"'`]+|https?:\/\/[^"'`]*(api|megadex)[^"'`]*\.json[^"'`]*)["'`]/g)].map((m) => m[1]);
+      L('possiveis endpoints: ' + JSON.stringify([...new Set(apis)].slice(0, 20)));
+      // trechos ao redor de "raridade" e "carta"
+      const idx = res.text.toLowerCase().indexOf('rarid');
+      if (idx >= 0) L('trecho rarid: ' + res.text.slice(idx - 60, idx + 120).replace(/\s+/g, ' '));
+      L('inicio do body (600): ' + res.text.replace(/\s+/g, ' ').slice(0, 600));
     }
-    for (const [k, v] of rar) line(`    ${k}: ${v}`);
   }
-
-  // Busca por nome (Pikachu)
-  line('');
-  line('===== BUSCA cards?name=Pikachu (pt) =====');
-  try {
-    const pika = await j('/cards?name=Pikachu&pagination:itemsPerPage=5', 'pt').catch(() => j('/cards?name=Pikachu&pagination:itemsPerPage=5', 'en'));
-    line(`  retornou ${Array.isArray(pika) ? pika.length : 'N/A'} (amostra):`);
-    for (const c of (Array.isArray(pika) ? pika.slice(0, 5) : [])) line('    ' + JSON.stringify(c));
-  } catch (e) { line('  falhou: ' + e.message); }
-
-  line('');
-  line('===== FIM DA SONDAGEM =====');
+  L('\n===== FIM DA SONDAGEM =====');
 } catch (err) {
-  console.error('ERRO NA SONDAGEM:', err);
+  console.error('ERRO:', err);
   process.exit(1);
 }

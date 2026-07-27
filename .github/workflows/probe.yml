@@ -1,4 +1,4 @@
-name: Sondagem TCGdex
+name: Sondagem fonte
 
 on:
   workflow_dispatch:
