@@ -1,15 +1,20 @@
-name: Sondagem fonte
+name: Gerar dados (validação)
 
 on:
   workflow_dispatch:
 
 jobs:
-  probe:
+  build-data:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Rodar sondagem
-        run: node scripts/probe.mjs
+      - name: Gerar data/targets.json
+        run: node scripts/build-data.mjs
+      - name: Publicar artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: targets
+          path: data/targets.json
