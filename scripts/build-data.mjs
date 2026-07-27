@@ -17,14 +17,17 @@ const NAMED = [
 const NAMED_LC = new Set(NAMED.map((n) => n.name.toLowerCase()));
 const NAMED_DEX = new Set(NAMED.map((n) => n.dex));
 
-// Classificação de raridade -> código do anexo. PT + EN. Mais específico primeiro.
+// Classificação de raridade -> código do anexo. PT + EN. Vence a keyword mais
+// longa (mais específica), então "ilustração rara especial" (SIR) vence
+// "ilustração rara" (IR). Strings reais da TCGdex (pt): "Ultra Rara",
+// "Ilustração Rara", "Ilustração Rara Especial", "Mega Hiper Raro".
 const RARITY_RULES = [
-  { code: 'MHR', kw: ['mega hyper rare', 'mega hiper rara', 'hiper rara mega'] },
-  { code: 'MAR', kw: ['mega attack rare', 'mega ataque rara', 'ataque mega rara'] },
-  { code: 'HR', kw: ['hyper rare', 'hiper rara', 'rara hiper', 'rara ouro', 'rara dourada', 'gold'] },
-  { code: 'SIR', kw: ['special illustration rare', 'ilustração especial rara', 'rara ilustração especial', 'rara ilustração especial'] },
-  { code: 'IR', kw: ['illustration rare', 'ilustração rara', 'rara ilustração'] },
-  { code: 'UR', kw: ['ultra rare', 'ultra rara', 'rara ultra'] },
+  { code: 'MHR', kw: ['mega hiper rar', 'mega hyper rar'] },
+  { code: 'MAR', kw: ['mega ataque rar', 'mega attack rar'] },
+  { code: 'SIR', kw: ['ilustração rara especial', 'special illustration rare'] },
+  { code: 'IR', kw: ['ilustração rara', 'illustration rare'] },
+  { code: 'UR', kw: ['ultra rara', 'ultra rare'] },
+  { code: 'HR', kw: ['hiper raro', 'hiper rara', 'hyper rare', 'rara dourada', 'gold'] },
 ];
 function classify(r) {
   const s = (r || '').toLowerCase();
@@ -57,13 +60,9 @@ async function mapLimit(items, limit, fn) {
   return out;
 }
 
-const isEvolution = (c) => {
-  const st = (c.stage || '').toLowerCase();
-  if (c.evolveFrom) return true;
-  if (!st) return false;
-  if (st.includes('bás') || st.includes('bas') || st.includes('basic')) return false;
-  return true; // Estágio1/2, MEGA, VMAX, etc.
-};
+// Carta de Megaevolução = nome começa com "Mega " (ex.: "Mega Charizard ex").
+// Evita pegar Pokémon evoluídos comuns (Meganium, etc.).
+const isMega = (c) => /^mega\s/i.test((c.name || '').trim());
 
 console.log('== Buscando séries ==');
 const series = await j('/series');
@@ -125,7 +124,7 @@ function reasonsFor(c) {
   const rs = [];
   if (classify(c.rarity)) rs.push('rarity');
   if ((Array.isArray(c.dexId) && c.dexId.some((d) => NAMED_DEX.has(d))) || NAMED_LC.has((c.name || '').toLowerCase())) rs.push('named');
-  if (isEvolution(c)) rs.push('megaEvo');
+  if (isMega(c)) rs.push('megaEvo');
   return rs;
 }
 
@@ -159,12 +158,18 @@ for (const t of targets) for (const r of t.reasons) byReason[r]++;
 const perSet = new Map();
 for (const t of targets) perSet.set(t.setId, (perSet.get(t.setId) || 0) + 1);
 
+const byCode = {};
+for (const t of targets) { const k = t.code || '(evo/named)'; byCode[k] = (byCode[k] || 0) + 1; }
+const withImg = targets.filter((t) => t.img).length;
+
 console.log('\n== ALVOS ==');
 console.log('Total de cartas no bloco:', allCards.length, '| Alvos:', targets.length);
 console.log('Por razão:', JSON.stringify(byReason));
+console.log('Por código de raridade:', JSON.stringify(byCode));
 console.log('Por set:', [...perSet.entries()].map(([k, v]) => `${k}=${v}`).join(', '));
-console.log('Amostra de alvos:');
-for (const t of targets.slice(0, 6)) console.log('  ', JSON.stringify({ id: t.id, name: t.name, code: t.code, rarity: t.rarity, reasons: t.reasons, img: t.img }));
+console.log(`Com imagem: ${withImg}/${targets.length} (${Math.round((withImg / targets.length) * 100)}%)`);
+console.log('Amostra de alvos (me01):');
+for (const t of targets.filter((t) => t.setId === 'me01').slice(0, 8)) console.log('  ', JSON.stringify({ id: t.id, name: t.name, code: t.code, rarity: t.rarity, reasons: t.reasons, img: t.img }));
 
 const output = {
   source: 'tcgdex',
