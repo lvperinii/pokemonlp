@@ -1,96 +1,71 @@
-# Coleção Pokémon — Tracker
+# Coleção Megaevolução — o que falta
 
-App web (PWA) para acompanhar sua coleção de cartas Pokémon: saber, **em cada set**,
-quais cartas você **já tem** e quais **faltam**.
+App web (PWA) para acompanhar a coleção de cartas do bloco **Megaevolução**:
+saber, **em cada set**, quais cartas você **já tem** e quais **faltam** comprar.
 
-Sem instalação, sem servidor, sem login. Roda 100% no navegador e guarda seus dados
-no próprio dispositivo (IndexedDB). Dá pra instalar como app no celular e usar offline.
+Abre já mostrando a lista do que falta (por set, com imagem), sem precisar
+sincronizar nada. O que você marca como "tenho" fica salvo no próprio navegador.
 
-## O que ele acompanha (regras da coleção)
+🔗 **Online:** https://lvperinii.github.io/pokemonlp/
 
-Uma carta entra como **alvo** da sua coleção se atender a qualquer uma destas regras
-(todas configuráveis em **Ajustes**):
+## O que ele acompanha
 
-1. **Raridades-chase** — `UR`, `IR`, `SIR`, `HR`/`MHR`, `MAR`.
-   Os códigos são deduzidos automaticamente das raridades reais de cada set;
-   você confirma quais valem em **Ajustes → Raridades descobertas**.
-2. **Pokémon específicos** — todas as cartas de **Pikachu, Charmander, Squirtle e Bulbasaur**,
-   em qualquer raridade ou set.
-3. **Evoluções do bloco Mega Evolução** — cartas de evolução (Mega / Stage) dos sets
-   do bloco atual. O app detecta o bloco automaticamente na lista de séries.
+As cartas-alvo do bloco Megaevolução (série `me` da TCGdex), filtradas por:
+
+1. **Raridades-chase** — `UR` (Ultra Rara), `IR` (Ilustração Rara),
+   `SIR` (Ilustração Rara Especial) e `MHR` (Mega Hiper Raro).
+2. **Cartas Mega** — todas as cartas de Megaevolução (nome "Mega …").
+3. **Pikachu, Charmander, Squirtle e Bulbasaur** que aparecem no bloco.
+
+> Observação: a TCGdex não separa as raridades **MAR** (Mega Attack Rare) nem
+> um **HR** "dourado" à parte neste bloco — a raridade-topo aqui é a **MHR**.
 
 ## Como usar
 
-1. Abra o app (veja _Hospedar_ abaixo, ou rode localmente).
-2. **Ver demo** — carrega cartas fictícias só pra você conhecer a interface sem rede.
-3. **Sincronizar** — busca os sets na [TCGdex](https://tcgdex.dev). Os sets do bloco
-   Mega Evolução já vêm marcados; marque também a opção de importar Pikachu/starters.
-   Clique em **Importar selecionados** (a primeira vez baixa os detalhes das cartas
-   e pode demorar — fica em cache depois).
-4. Marque com **✓** as cartas que você tem. O progresso por set aparece no topo de cada seção.
-5. Filtre por set, regra, raridade ou por **Faltam / Tenho**.
-6. **Exportar / Importar** — faça backup do seu progresso em um arquivo `.json`
-   (útil pra trocar de aparelho, já que os dados ficam no navegador).
+1. Abra o app (link acima) ou rode localmente (veja abaixo).
+2. A tela já mostra **o que falta em cada set**. Use os filtros (set, raridade,
+   regra, ou Faltam/Tenho/Todos) e a busca.
+3. Clique no **+** de uma carta para marcar que você já tem (vira ✓).
+4. Clique na carta para ver a arte grande e o botão **Comprar na Liga Pokémon**.
+5. **Exportar / Importar** faz backup do seu progresso em `.json`
+   (os dados ficam no navegador; use para trocar de aparelho).
 
-## Dados
+## De onde vêm os dados
 
-- Fonte: **TCGdex** (API pública, gratuita, com suporte a português e aos sets japoneses
-  recentes do bloco Mega Evolução). A busca acontece no seu navegador.
-- Nada é enviado para nenhum servidor nosso — não existe backend.
-- O cache de cartas e o que você marcou como "tenho" ficam no IndexedDB do navegador.
-  Limpar os dados do site apaga isso; por isso use **Exportar** para backup.
+- Fonte: **TCGdex** (API pública, em português, com imagens das cartas).
+- O arquivo `data/targets.json` é **gerado no GitHub Actions** pelo script
+  `scripts/build-data.mjs` (que busca o bloco na TCGdex, classifica as
+  raridades e monta a lista de alvos) e commitado no repositório.
+- Atualiza automaticamente toda semana (e sob demanda) pelo workflow
+  **Atualizar dados (Megaevolução)** — rode-o manualmente em *Actions* quando
+  sair um set novo.
+- Nada é enviado para nenhum servidor nosso: o que você marca fica só no seu
+  navegador (localStorage).
 
 ## Rodar localmente
 
-O jeito mais fácil (abre o navegador sozinho, sem instalar nada além do Node):
+O jeito mais fácil (abre o navegador sozinho):
 
-- **Windows:** dê duplo-clique em **`start.bat`**
-- **macOS / Linux:** rode **`./start.sh`** no terminal (ou `sh start.sh`)
-- **Com npm:** `npm start`
-- **Com Node direto:** `node server.js` (opcional: `node server.js 8080` para trocar a porta)
+- **Windows:** duplo-clique em `start.bat`
+- **macOS / Linux:** `./start.sh`
+- **npm:** `npm start` — ou **Node:** `node server.js`
 
-Qualquer uma dessas sobe um servidor local e abre **http://localhost:8000**.
-
-Não tem Node? Dá pra usar Python — os scripts `start` já caem nele automaticamente,
-ou rode manualmente:
-
-```bash
-python3 -m http.server 8000   # depois abra http://localhost:8000
-```
-
-> ⚠️ Como usa ES Modules, precisa ser servido por HTTP. **Não** funciona abrindo o
-> `index.html` com duplo-clique (`file://`).
-
-## Hospedar de graça (GitHub Pages)
-
-Já existe um workflow em `.github/workflows/deploy-pages.yml`. Depois do merge na branch
-padrão, ative o Pages em **Settings → Pages → Build and deployment → GitHub Actions**.
-O site fica em `https://<seu-usuario>.github.io/<repo>/`.
+Abre em http://localhost:8000. (Precisa ser via HTTP — não abra o `index.html`
+direto pelo `file://`.)
 
 ## Estrutura
 
 ```
-index.html            # shell da interface
+index.html            # interface
 styles.css            # estilos (tema escuro)
 manifest.webmanifest  # PWA
-sw.js                 # service worker (offline do app)
-server.js             # servidor local sem dependências (Node)
+sw.js                 # service worker (offline)
+server.js             # servidor local sem dependências
 start.sh / start.bat  # atalhos para rodar localmente
-package.json          # npm start
 assets/icon.svg       # ícone (Poké Ball)
-js/
-  config.js           # regras/ajustes padrão + heurística de raridades
-  api.js              # adaptador da TCGdex (fetch + concorrência)
-  db.js               # IndexedDB (cache, coleção, backup)
-  rules.js            # motor de regras (o que é "alvo" e por quê)
-  demo.js             # dados fictícios para demonstração/offline
-  app.js              # estado, sincronização e render
+data/targets.json     # cartas-alvo (gerado da TCGdex)
+js/app.js             # app: carrega os dados, filtra, marca tenho/faltam
+scripts/build-data.mjs           # gerador dos dados (roda no CI)
+.github/workflows/build-data.yml # gera e commita os dados
+.github/workflows/deploy-pages.yml # publica no GitHub Pages
 ```
-
-## Notas
-
-- As raridades novas do bloco Mega (ex.: **MAR**, **MHR**) e as strings em português
-  podem variar; por isso a classificação é ajustável em **Ajustes**, e você pode
-  marcar/desmarcar qualquer raridade descoberta.
-- "Evolução" no bloco Mega considera cartas com `evolveFrom` ou estágio diferente de
-  básico (Mega, Stage 1/2). Dá pra desligar isso em **Ajustes** para contar o bloco inteiro.

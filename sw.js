@@ -1,7 +1,7 @@
 // sw.js — Service Worker: cacheia o "app shell" para funcionar offline.
 // Os dados das cartas ficam no IndexedDB (não passam por aqui).
 
-const CACHE = 'pokemon-lp-v1';
+const CACHE = 'pokemon-lp-v2';
 const SHELL = [
   './',
   './index.html',
@@ -9,11 +9,7 @@ const SHELL = [
   './manifest.webmanifest',
   './assets/icon.svg',
   './js/app.js',
-  './js/api.js',
-  './js/db.js',
-  './js/rules.js',
-  './js/config.js',
-  './js/demo.js',
+  './data/targets.json',
 ];
 
 self.addEventListener('install', (e) => {

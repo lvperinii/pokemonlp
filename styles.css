@@ -147,6 +147,9 @@ h3 { margin: 18px 0 6px; font-size: 15px; }
 .cm-img { flex: 0 0 220px; }
 .cm-img img { width: 100%; border-radius: 10px; }
 .cm-info { flex: 1; min-width: 200px; }
+.cm-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+a.btn { text-decoration: none; display: inline-flex; align-items: center; }
+.brand em { font-style: normal; color: var(--accent); }
 
 @media (max-width: 560px) {
   .stats { grid-template-columns: repeat(2, 1fr); }

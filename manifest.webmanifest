@@ -1,7 +1,7 @@
 {
-  "name": "Coleção Pokémon — Tracker",
-  "short_name": "Coleção Pkmn",
-  "description": "Acompanhe quais cartas Pokémon você já tem e quais faltam em cada set.",
+  "name": "Coleção Megaevolução — o que falta",
+  "short_name": "Megaevolução",
+  "description": "Acompanhe quais cartas do bloco Megaevolução você já tem e quais faltam em cada set.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
