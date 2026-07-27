@@ -1,0 +1,34 @@
+name: Atualizar dados (Megaevolução)
+
+# Gera data/targets.json a partir da TCGdex e comita no repositório.
+# Roda sob demanda e semanalmente (para manter o bloco atualizado).
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1' # toda segunda-feira, 06:00 UTC
+
+permissions:
+  contents: write
+
+jobs:
+  build-data:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Gerar data/targets.json
+        run: node scripts/build-data.mjs
+      - name: Commitar se houver mudança
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/targets.json
+          if git diff --staged --quiet; then
+            echo "Sem mudanças nos dados."
+          else
+            git commit -m "chore(dados): atualiza data/targets.json [skip ci]"
+            git push
+          fi
